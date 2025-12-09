@@ -13,39 +13,32 @@ from .config import (
 )
 
 class CalculatorUI(QWidget):
-    """
-    Класс пользовательского интерфейса калькулятора.
-    """
-
     def __init__(self, logic, history):
         super().__init__()
         self.logic = logic
         self.history = history
         self.current_expression = ""
         self.buttons_config = BUTTONS
+        self.show_trig = False
+        self.dark_mode = False
         self.init_ui()
 
     def init_ui(self):
         self.setWindowTitle(WINDOW_TITLE)
         self.setGeometry(300, 300, *WINDOW_SIZE)
-        self.show_trig = False
-        self.dark_mode = False
 
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self._setup_top_buttons()
-        self._setup_display()
-        self._setup_history()
-        self._setup_buttons()
+        self.setup_top_buttons()
+        self.setup_display()
+        self.setup_history()
+        self.setup_buttons()
 
         self.apply_theme()
         self.update_history_display()
 
-    def _setup_top_buttons(self):
-        """
-        Настройка верхних кнопок (очистка истории и переключение темы).
-        """
+    def setup_top_buttons(self):
         top_layout = QHBoxLayout()
         self.clear_history_btn = QPushButton("🗑️")
         self.clear_history_btn.setFixedSize(*TOP_BUTTON_SIZE)
@@ -60,29 +53,20 @@ class CalculatorUI(QWidget):
         top_layout.addWidget(self.theme_btn)
         self.layout().addLayout(top_layout)
 
-    def _setup_display(self):
-        """
-        Настройка дисплея выражения.
-        """
+    def setup_display(self):
         self.display = QLineEdit()
         self.display.setReadOnly(True)
         self.display.setAlignment(Qt.AlignRight)
         self.display.setFont(QFont("Arial", DISPLAY_FONT_SIZE))
         self.layout().addWidget(self.display)
 
-    def _setup_history(self):
-        """
-        Настройка дисплея истории.
-        """
+    def setup_history(self):
         self.history_display = QTextEdit()
         self.history_display.setMaximumHeight(HISTORY_DISPLAY_HEIGHT)
         self.history_display.setReadOnly(True)
         self.layout().addWidget(self.history_display)
 
-    def _setup_buttons(self):
-        """
-        Настройка кнопок калькулятора.
-        """
+    def setup_buttons(self):
         buttons_layout = QGridLayout()
         self.buttons = {}
         for text, row, col in self.buttons_config:
@@ -102,17 +86,12 @@ class CalculatorUI(QWidget):
         self.layout().addLayout(buttons_layout)
 
     def on_button_click(self, text):
-        """
-        Обработчик нажатия кнопки.
-        """
         if text == 'C':
-            self.current_expression = self.current_expression[:-1]  # Удалить последний символ
+            self.current_expression = self.current_expression[:-1]
         elif text == 'trig':
             self.toggle_trig()
         elif text == '±':
-            if self.current_expression and self.current_expression[-1].isdigit():
-                # Найти последнее число и изменить знак
-                # Простая реализация: добавить - в начало, но нужно парсить
+            if self.current_expression:
                 if self.current_expression.startswith('-'):
                     self.current_expression = self.current_expression[1:]
                 else:
@@ -130,21 +109,14 @@ class CalculatorUI(QWidget):
         self.display.setText(self.current_expression)
 
     def toggle_trig(self):
-        """
-        Переключает видимость тригонометрических функций.
-        """
         self.show_trig = not self.show_trig
         for btn in ['sin', 'cos', 'tan', 'sqrt']:
             if btn in self.buttons:
                 self.buttons[btn].setVisible(self.show_trig)
-        # Изменить высоту окна
         height = WINDOW_SIZE[1] + 70 if self.show_trig else WINDOW_SIZE[1]
         self.setGeometry(300, 300, WINDOW_SIZE[0], height)
 
     def apply_theme(self):
-        """
-        Применяет текущую тему, загружая QSS из файла.
-        """
         filename = os.path.join(THEME_DIR, DARK_THEME_FILE if self.dark_mode else LIGHT_THEME_FILE)
         try:
             with open(filename, "r", encoding="utf-8") as f:
@@ -154,17 +126,11 @@ class CalculatorUI(QWidget):
             print(f"Файл стиля {filename} не найден.")
 
     def toggle_theme(self):
-        """
-        Переключает тему.
-        """
         self.dark_mode = not self.dark_mode
         self.theme_btn.setText("☀️" if self.dark_mode else "🌙")
         self.apply_theme()
 
     def clear_history(self):
-        """
-        Очищает историю вычислений и текущий ввод.
-        """
         self.history.history = []
         self.history.save_history()
         self.update_history_display()
@@ -172,8 +138,5 @@ class CalculatorUI(QWidget):
         self.display.setText("")
 
     def update_history_display(self):
-        """
-        Обновляет отображение истории.
-        """
         hist = self.history.get_history()
-        self.history_display.setText('\n'.join(hist[-5:]))  # Показать последние 5 записей
+        self.history_display.setText('\n'.join(hist[-5:]))

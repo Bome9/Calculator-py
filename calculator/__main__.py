@@ -1,11 +1,8 @@
-"""
-Точка входа для запуска калькулятора как модуля: python -m calculator
-"""
-
 import sys
 from PySide6.QtWidgets import QApplication
 from . import CalculatorLogic, CalculatorHistory, CalculatorUI
 
+# Точка входа
 def main():
     app = QApplication(sys.argv)
     logic = CalculatorLogic()
