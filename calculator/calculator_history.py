@@ -1,4 +1,5 @@
 import os
+from .config import HISTORY_FILE
 
 class CalculatorHistory:
     """
@@ -6,7 +7,7 @@ class CalculatorHistory:
     Сохраняет и загружает историю из файла history.txt.
     """
 
-    def __init__(self, filename="history.txt"):
+    def __init__(self, filename=HISTORY_FILE):
         self.filename = filename
         self.history = []
         self.load_history()
