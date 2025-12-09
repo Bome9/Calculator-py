@@ -1,10 +1,11 @@
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QPushButton, QLabel, QLineEdit, QTextEdit
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
+    QPushButton, QLineEdit, QTextEdit
 )
 from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
 import os
+import math
 from .config import (
     BUTTONS, WINDOW_TITLE, WINDOW_SIZE, DISPLAY_FONT_SIZE,
     BUTTON_FONT_SIZE, OPERATION_FONT_SIZE, BUTTON_SIZE,
@@ -17,7 +18,7 @@ class CalculatorUI(QWidget):
         super().__init__()
         self.logic = logic
         self.history = history
-        self.current_expression = ""
+        self.current_expression = "0"
         self.buttons_config = BUTTONS
         self.show_trig = False
         self.dark_mode = False
@@ -37,6 +38,7 @@ class CalculatorUI(QWidget):
 
         self.apply_theme()
         self.update_history_display()
+        self.display.setText(self.current_expression)
 
     def setup_top_buttons(self):
         top_layout = QHBoxLayout()
@@ -76,18 +78,25 @@ class CalculatorUI(QWidget):
             button.clicked.connect(lambda checked, t=text: self.on_button_click(t))
             buttons_layout.addWidget(button, row, col)
             self.buttons[text] = button
-            if text in ['/', '*', '-', '+', '=']:
-                button.setObjectName("operation")
+            if text in ['/', '*', '-', '+', '=', 'del']:
+                if text == 'del':
+                    button.setObjectName("del")
+                else:
+                    button.setObjectName("operation")
                 button.setFont(QFont("Arial", OPERATION_FONT_SIZE))
-            elif row >= 1:
+            elif row >= 2:
                 button.setObjectName("secondary")
-            if row == 5:
+            if row == 6:
                 button.setVisible(False)
         self.layout().addLayout(buttons_layout)
 
     def on_button_click(self, text):
-        if text == 'C':
+        if text == 'AC':
+            self.current_expression = "0"
+        elif text == 'del':
             self.current_expression = self.current_expression[:-1]
+            if not self.current_expression:
+                self.current_expression = "0"
         elif text == 'trig':
             self.toggle_trig()
         elif text == '±':
@@ -96,6 +105,30 @@ class CalculatorUI(QWidget):
                     self.current_expression = self.current_expression[1:]
                 else:
                     self.current_expression = '-' + self.current_expression
+        elif text in ['1/x', 'x²', '√']:
+            if self.current_expression:
+                try:
+                    val = float(self.current_expression)
+                    if text == '1/x':
+                        if val == 0:
+                            raise ZeroDivisionError
+                        result = 1 / val
+                        expr = f"1/{self.current_expression}"
+                    elif text == 'x²':
+                        result = val ** 2
+                        expr = f"{self.current_expression}²"
+                    elif text == '√':
+                        result = math.sqrt(val)
+                        expr = f"√{self.current_expression}"
+                    if result == int(result):
+                        result = int(result)
+                    self.history.add_entry(expr, str(result))
+                    self.update_history_display()
+                    self.current_expression = str(result)
+                except ValueError:
+                    self.current_expression = "Ошибка: неверное число"
+                except ZeroDivisionError:
+                    self.current_expression = "Ошибка: деление на ноль"
         elif text == '=':
             result = self.logic.evaluate(self.current_expression)
             if isinstance(result, float) and result.is_integer():
@@ -105,7 +138,13 @@ class CalculatorUI(QWidget):
                 self.update_history_display()
             self.current_expression = str(result)
         else:
-            self.current_expression += text
+            if text.isdigit() or text == '.':
+                if self.current_expression == "0":
+                    self.current_expression = text
+                else:
+                    self.current_expression += text
+            else:
+                self.current_expression += text
         self.display.setText(self.current_expression)
 
     def toggle_trig(self):
@@ -134,9 +173,9 @@ class CalculatorUI(QWidget):
         self.history.history = []
         self.history.save_history()
         self.update_history_display()
-        self.current_expression = ""
-        self.display.setText("")
+        self.current_expression = "0"
+        self.display.setText("0")
 
     def update_history_display(self):
         hist = self.history.get_history()
-        self.history_display.setText('\n'.join(hist[-5:]))
+        self.history_display.setText('\n'.join(reversed(hist[-5:])))

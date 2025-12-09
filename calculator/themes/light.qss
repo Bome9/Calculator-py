@@ -44,6 +44,9 @@ QPushButton#operation:pressed {
 QPushButton#top_button {
     border-radius: 8px;
 }
+QPushButton#del {
+    font-size: 20px;
+}
 QTextEdit {
     background-color: white;
     border: 2px solid #ccc;
