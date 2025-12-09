@@ -8,7 +8,6 @@ from PySide6.QtCore import Qt
 class CalculatorUI(QWidget):
     """
     Класс пользовательского интерфейса калькулятора.
-    Стиль в духе Apple Calculator: серые цвета, округлые кнопки, минимализм.
     """
 
     def __init__(self, logic, history):
@@ -19,17 +18,29 @@ class CalculatorUI(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        """
-        Инициализация интерфейса.
-        """
         self.setWindowTitle("Calculator")
-        self.setGeometry(300, 300, 300, 550)
-        self.ac_mode = True  # Режим AC
+        self.setGeometry(300, 300, 300, 570)  # Увеличить высоту для кнопок
         self.show_trig = False  # Показывать ли тригонометрию
+        self.dark_mode = False  # Темная тема
 
         # Основной layout
         layout = QVBoxLayout()
         self.setLayout(layout)
+
+        # Кнопки вверху
+        top_layout = QHBoxLayout()
+        self.clear_history_btn = QPushButton("🗑️")
+        self.clear_history_btn.setFixedSize(40, 35)
+        self.clear_history_btn.setObjectName("top_button")
+        self.clear_history_btn.clicked.connect(self.clear_history)
+        self.theme_btn = QPushButton("🌙")
+        self.theme_btn.setFixedSize(40, 35)
+        self.theme_btn.setObjectName("top_button")
+        self.theme_btn.clicked.connect(self.toggle_theme)
+        top_layout.addWidget(self.clear_history_btn)
+        top_layout.addStretch()
+        top_layout.addWidget(self.theme_btn)
+        layout.addLayout(top_layout)
 
         # Дисплей
         self.display = QLineEdit()
@@ -48,7 +59,7 @@ class CalculatorUI(QWidget):
         buttons_layout = QGridLayout()
 
         buttons = [
-            ('AC', 0, 0), ('±', 0, 1), ('%', 0, 2), ('/', 0, 3),
+            ('C', 0, 0), ('±', 0, 1), ('%', 0, 2), ('/', 0, 3),
             ('7', 1, 0), ('8', 1, 1), ('9', 1, 2), ('*', 1, 3),
             ('4', 2, 0), ('5', 2, 1), ('6', 2, 2), ('-', 2, 3),
             ('1', 3, 0), ('2', 3, 1), ('3', 3, 2), ('+', 3, 3),
@@ -66,54 +77,15 @@ class CalculatorUI(QWidget):
             self.buttons[text] = button
             if text in ['/', '*', '-', '+', '=']:
                 button.setObjectName("operation")
+                button.setFont(QFont("Arial", 18))  # Больше шрифт для операций
+            elif row >= 1:  # Начиная со второй строки, не оранжевые
+                button.setObjectName("secondary")
             if row == 5:  # Скрыть ряд тригонометрии
                 button.setVisible(False)
 
         layout.addLayout(buttons_layout)
 
-        # Стилизация
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #f5f5f7;
-            }
-            QLineEdit {
-                background-color: white;
-                border: 2px solid #ccc;
-                border-radius: 10px;
-                padding: 10px;
-                font-size: 24px;
-            }
-            QPushButton {
-                background-color: #e0e0e0;
-                border: none;
-                border-radius: 30px;
-                font-size: 20px;
-                color: black;
-            }
-            QPushButton:hover {
-                background-color: #d0d0d0;
-            }
-            QPushButton:pressed {
-                background-color: #c0c0c0;
-            }
-            QPushButton#operation {
-                background-color: #ff9500;
-                font-size: 20px;
-                color: white;
-            }
-            QPushButton#operation:hover {
-                background-color: #e67e00;
-            }
-            QPushButton#operation:pressed {
-                background-color: #cc6600;
-            }
-            QTextEdit {
-                background-color: white;
-                border: 2px solid #ccc;
-                border-radius: 10px;
-                font-size: 12px;
-            }
-        """)
+        self.apply_theme()
 
         self.update_history_display()
 
@@ -121,12 +93,8 @@ class CalculatorUI(QWidget):
         """
         Обработчик нажатия кнопки.
         """
-        if text == 'AC':
-            self.current_expression = ""
-            self.ac_mode = True
-            self.buttons['AC'].setText('AC')
-        elif text == 'C':
-            self.current_expression = self.current_expression[:-1]
+        if text == 'C':
+            self.current_expression = self.current_expression[:-1]  # Удалить последний символ
         elif text == 'trig':
             self.toggle_trig()
         elif text == '±':
@@ -147,9 +115,6 @@ class CalculatorUI(QWidget):
             self.current_expression = str(result)
         else:
             self.current_expression += text
-            if self.ac_mode:
-                self.ac_mode = False
-                self.buttons['AC'].setText('C')
         self.display.setText(self.current_expression)
 
     def toggle_trig(self):
@@ -166,9 +131,144 @@ class CalculatorUI(QWidget):
         else:
             self.setGeometry(300, 300, 300, 550)
 
+    def apply_theme(self):
+        """
+        Применяет текущую тему.
+        """
+        if self.dark_mode:
+            self.setStyleSheet("""
+                QWidget {
+                    background-color: #1c1c1e;
+                }
+                QLineEdit {
+                    background-color: #2c2c2e;
+                    border: 2px solid #3c3c3e;
+                    border-radius: 10px;
+                    padding: 10px;
+                    font-size: 24px;
+                    color: white;
+                }
+                QPushButton {
+                    background-color: #48484a;
+                    border: none;
+                    border-radius: 30px;
+                    font-size: 20px;
+                    color: white;
+                }
+                QPushButton:hover {
+                    background-color: #5c5c5e;
+                }
+                QPushButton:pressed {
+                    background-color: #6c6c6e;
+                }
+                QPushButton#secondary {
+                    background-color: #3c3c3e;
+                }
+                QPushButton#secondary:hover {
+                    background-color: #4c4c4e;
+                }
+                QPushButton#secondary:pressed {
+                    background-color: #5c5c5e;
+                }
+                QPushButton#operation {
+                    background-color: #ff9500;
+                    font-size: 30px;
+                    color: white;
+                }
+                QPushButton#operation:hover {
+                    background-color: #e67e00;
+                }
+                QPushButton#operation:pressed {
+                    background-color: #cc6600;
+                }
+                QPushButton#top_button {
+                    border-radius: 8px;
+                }
+                QTextEdit {
+                    background-color: #2c2c2e;
+                    border: 2px solid #3c3c3e;
+                    border-radius: 10px;
+                    font-size: 12px;
+                    padding: 2px;
+                    color: white;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QWidget {
+                    background-color: #f5f5f7;
+                }
+                QLineEdit {
+                    background-color: white;
+                    border: 2px solid #ccc;
+                    border-radius: 10px;
+                    padding: 10px;
+                    font-size: 24px;
+                }
+                QPushButton {
+                    background-color: #e0e0e0;
+                    border: none;
+                    border-radius: 30px;
+                    font-size: 20px;
+                    color: black;
+                }
+                QPushButton:hover {
+                    background-color: #d0d0d0;
+                }
+                QPushButton:pressed {
+                    background-color: #c0c0c0;
+                }
+                QPushButton#secondary {
+                    background-color: #c0c0c0;
+                }
+                QPushButton#secondary:hover {
+                    background-color: #b0b0b0;
+                }
+                QPushButton#secondary:pressed {
+                    background-color: #a0a0a0;
+                }
+                QPushButton#operation {
+                    background-color: #ff9500;
+                    font-size: 30px;
+                    color: white;
+                }
+                QPushButton#operation:hover {
+                    background-color: #e67e00;
+                }
+                QPushButton#operation:pressed {
+                    background-color: #cc6600;
+                }
+                QPushButton#top_button {
+                    border-radius: 8px;
+                }
+                QTextEdit {
+                    background-color: white;
+                    border: 2px solid #ccc;
+                    border-radius: 10px;
+                    font-size: 12px;
+                    padding: 2px;
+                }
+            """)
+
+    def toggle_theme(self):
+        """
+        Переключает тему.
+        """
+        self.dark_mode = not self.dark_mode
+        self.theme_btn.setText("☀️" if self.dark_mode else "🌙")
+        self.apply_theme()
+
+    def clear_history(self):
+        """
+        Очищает историю вычислений.
+        """
+        self.history.history = []
+        self.history.save_history()
+        self.update_history_display()
+
     def update_history_display(self):
         """
         Обновляет отображение истории.
         """
         hist = self.history.get_history()
-        self.history_display.setText('\n'.join(hist[-10:]))  # Показать последние 10 записей
+        self.history_display.setText('\n'.join(hist[-5:]))  # Показать последние 5 записей
